@@ -1,2 +1,4 @@
 from transformers import pipeline;
-print(pipeline('sentiment-analysis')('we love you'))
+sent="Moritz is an evil bastard. He wanted to destroy the world."
+print(sent)
+print(pipeline('sentiment-analysis')(sent))
