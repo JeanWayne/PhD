@@ -2,6 +2,31 @@ from nltk import word_tokenize
 from pymongo import MongoClient
 import numpy as np
 from nltk.util import ngrams
+import math
+import collections
+
+def buildmodel(text):
+    model = collections.Counter(xgram(text))
+    nr_of_ngs = sum(model.values())
+
+    for w in model:
+        model[w] = float(model[w]) / float(nr_of_ngs)
+
+    return model
+
+def cosine(a,b):
+    return sum([a[k]*b[k] for k in a if k in b]) / (math.sqrt(sum([a[k]**2 for k in a])) * math.sqrt(sum([b[k]**2 for k in b])))
+
+def ngram(string,n):
+    liste = []
+    if n < len(string):
+        for p in range(len(string) - n + 1) :
+            tg = string[p:p+n]
+            liste.append(tg)
+    return liste
+
+def xgram(string):
+    return [w for n in range(1,4) for w in ngram(string.lower(),n)]
 
 def loadAllText():
     word2index={}
@@ -39,8 +64,15 @@ def text2WordOverLapVector(text,w2i):
             print("!")
     return liste
 
-
-
+def text2Vec(text,model):
+    vec=np.zeros(300)
+    vec_length=1
+    for token in word_tokenize(text.lower()):
+        if token in model:
+            vec=vec+model[token]
+            vec_length+=1
+    vec=vec/vec_length
+    return vec
 #print(len(gg))
 #print(len(w2i))
 #print(len(i2w))
