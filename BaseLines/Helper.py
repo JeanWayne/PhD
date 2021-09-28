@@ -17,6 +17,29 @@ def buildmodel(text):
 def cosine(a,b):
     return sum([a[k]*b[k] for k in a if k in b]) / (math.sqrt(sum([a[k]**2 for k in a])) * math.sqrt(sum([b[k]**2 for k in b])))
 
+def WordCounter(text):
+    text=text.lower()
+    text=word_tokenize(text)
+    return collections.Counter(text)
+
+
+def trigram(text):
+    try:
+        text = '##' + text + '##'
+    except TypeError:
+        print("!")
+    return [text[i:i+3] for i in range(len(text)-2)]
+
+def tgoverlap(t1,t2):
+    tg1 = set(trigram(t1))
+    tg2 = set(trigram(t2))
+    return len(tg1.intersection(tg2)) / len(tg1.union(tg2))
+
+def wordoverlap(t1,t2):
+    tg1 = set(WordCounter(t1))
+    tg2 = set(WordCounter(t2))
+    return len(tg1.intersection(tg2)) / len(tg1.union(tg2))
+
 def ngram(string,n):
     liste = []
     if n < len(string):
@@ -73,9 +96,8 @@ def text2Vec(text,model):
             vec_length+=1
     vec=vec/vec_length
     return vec
-#print(len(gg))
-#print(len(w2i))
-#print(len(i2w))
-#print(w2i["carbon"])
-#print(i2w[w2i["carbon"]])
+b=[True, True, False]
+
+print(label_list)
+
 
