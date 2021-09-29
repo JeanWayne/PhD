@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 #model = CrossEncoder('cross-encoder/stsb-distilroberta-base')
 
 #model = CrossEncoder('distilroberta-base', num_labels=2)
-model = CrossEncoder("output/training--2021-09-29_01-00-39")
+model = CrossEncoder("output/CrossEncoder-training--2021-09-29_01-00-39")
 
 # Read STSb dataset
 logger.info("Read  train dataset")
@@ -54,8 +54,10 @@ label_list=[do(x) for x in label_list]
 
 iter_range=int(len(s1_list)/3)
 for i in range(iter_range):
-    ex=InputExample(texts=[s1_list[i], s2_list[i]], label=label2int[label_list[i]])
+    ex = InputExample(texts=[s1_list[i], s2_list[i]], label=label2int[label_list[i]])
+    ex2 = InputExample(texts=[s2_list[i], s1_list[i]], label=label2int[label_list[i]])
     train_samples.append(ex)
+    train_samples.append(ex2)
 for i in range(iter_range,iter_range*2):
     ex=InputExample(texts=[s1_list[i], s2_list[i]], label=label2int[label_list[i]])
     dev_samples.append(ex)
