@@ -1,6 +1,7 @@
 import logging
 import math
 from datetime import datetime
+from sklearn.utils import shuffle
 
 import pandas as pd
 from sentence_transformers.cross_encoder import CrossEncoder
@@ -22,13 +23,13 @@ logger = logging.getLogger(__name__)
 #model = CrossEncoder('cross-encoder/stsb-distilroberta-base')
 
 #model = CrossEncoder('distilroberta-base', num_labels=2)
-model = CrossEncoder("output/CrossEncoder-training--2021-09-29_01-00-39")
+model = CrossEncoder("output/CrossEncoder-training--2021-09-29_21-55-46")
 
 # Read STSb dataset
 logger.info("Read  train dataset")
 train_batch_size = 32#16
 num_epochs=4
-model_save_path = 'output/training--'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+model_save_path = 'output/CrossEncoder-training--'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 train_samples = []
 dev_samples = []
 test_samples = []
@@ -41,6 +42,8 @@ label2int = {"same": 0, "different": 1}
 
 excel_data = pd.read_excel('D:\\PhD\\Notebooks\\captionpairs.xlsx')
 data = pd.DataFrame(excel_data, columns=['s1', 's2', 'same_img','id1','id2'])
+data = shuffle(data)
+
 for index,row in data.iterrows():
     if row["same_img"]:
         y.append(1)
@@ -76,11 +79,11 @@ logger.info("Warmup-steps: {}".format(warmup_steps))
 
 
 #model.fit(train_dataloader=train_dataloader,
-          #evaluator=evaluator,
-          #epochs=num_epochs,
-          #evaluation_steps=5000,
-          #warmup_steps=warmup_steps,
-          #output_path=model_save_path)
+          #xevaluator=evaluator,
+#          epochs=num_epochs,
+#          evaluation_steps=5000,
+#          warmup_steps=warmup_steps,
+#          output_path=model_save_path)
 #model.save(model_save_path)
 
 
@@ -96,3 +99,6 @@ cos_sim=[i[0] for i in cos_sim]
 fpr, tpr, thresholds = metrics.roc_curve(y[iter_range*2:iter_range*3], cos_sim)
 auc=metrics.auc(fpr, tpr)
 print("auc: ",auc)
+
+x=model.predict([s1_list[0],s2_list[0]],convert_to_tensor=True)
+print("DONE")   
