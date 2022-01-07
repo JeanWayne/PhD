@@ -22,13 +22,13 @@ logger = logging.getLogger(__name__)
 # Pre-trained cross encoder
 #model = CrossEncoder('cross-encoder/stsb-distilroberta-base')
 
-#model = CrossEncoder('distilroberta-base', num_labels=2)
-model = CrossEncoder("output/CrossEncoder-training--2021-09-29_21-55-46")
+model = CrossEncoder('roberta-base', num_labels=2)
+#model = CrossEncoder("output/CrossEncoder-training--2021-09-29_21-55-46")
 
 # Read STSb dataset
 logger.info("Read  train dataset")
-train_batch_size = 32#16
-num_epochs=4
+train_batch_size = 16
+num_epochs=2
 model_save_path = 'output/CrossEncoder-training--'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 train_samples = []
 dev_samples = []
@@ -78,13 +78,13 @@ warmup_steps = math.ceil(len(train_dataloader) * num_epochs * 0.1) #10% of train
 logger.info("Warmup-steps: {}".format(warmup_steps))
 
 
-#model.fit(train_dataloader=train_dataloader,
+model.fit(train_dataloader=train_dataloader,
           #xevaluator=evaluator,
-#          epochs=num_epochs,
-#          evaluation_steps=5000,
-#          warmup_steps=warmup_steps,
-#          output_path=model_save_path)
-#model.save(model_save_path)
+          epochs=num_epochs,
+          evaluation_steps=5000,
+          warmup_steps=warmup_steps,
+          output_path=model_save_path)
+model.save(model_save_path)
 
 
 #emb_s1=model.predict(s1_list)

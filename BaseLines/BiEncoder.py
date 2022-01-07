@@ -3,6 +3,7 @@ import math
 from datetime import datetime
 from random import random
 
+import torch
 from sentence_transformers.evaluation import EmbeddingSimilarityEvaluator, BinaryClassificationEvaluator
 from sklearn.utils import shuffle
 
@@ -30,13 +31,23 @@ logging.basicConfig(format='%(asctime)s - %(message)s',
 logger = logging.getLogger(__name__)
 # Pre-trained cross encoder
 model_name = 'roberta-base'#sentence-transformers/distiluse-base-multilingual-cased-v2'#'roberta-base'#'bert-base-uncased'
+model_name= 'output/bi-encoder/roberta-base-2021-10-13_09-54-56'#output/bi-encoder/sentence-transformers-distiluse-base-multilingual-cased-v2-2021-10-11_16-31-13'
+model_name= 'output/bi-encoder/output-bi-encoder-roberta-base-2021-10-13_09-54-56-2021-11-07_14-39-37'
+
 word_embedding_model = models.Transformer(model_name)
-pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension(), pooling_mode = 'cls', pooling_mode_cls_token = True)
+pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension())
+#pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension(), pooling_mode = 'cls', pooling_mode_cls_token = True)
 
 bi_encoder = SentenceTransformer(modules=[word_embedding_model, pooling_model])
-#model_name= 'output/bi-encoder/sentence-transformers-distiluse-base-multilingual-cased-v2-2021-10-11_16-31-13'
 max_seq_length = 128
 logging.info("Loading bi-encoder model: {}".format(model_name))
+
+
+#bi_encoder.register_backward_hook(printgradnorm)
+#last=bi_encoder._last_module()
+#for parameter in bi_encoder.parameters():
+#     print(parameter.requires_grad)
+####
 
 # Use Huggingface/transformers model (like BERT, RoBERTa, XLNet, XLM-R) for mapping tokens to embeddings
 #word_embedding_model = models.Transformer(model_name, max_seq_length=max_seq_length)
@@ -63,6 +74,7 @@ label_list=[]
 
 excel_data = pd.read_excel('D:\\PhD\\Notebooks\\captionpairs.xlsx')
 df = pd.DataFrame(excel_data, columns=['s1', 's2', 'same_img','id1','id2'])
+df.to_json("dataset.json")
 #data = shuffle(data)
 data = list(zip(df.s1,df.s2,df.same_img))
 
@@ -90,20 +102,20 @@ logging.info("Warmup-steps: {}".format(warmup_steps))
 
 
 # Train the bi-encoder model
-bi_encoder.fit(train_objectives=[(train_dataloader, train_loss)],
-          #evaluator=evaluator,
-          epochs=num_epochs,
-          evaluation_steps=1000,
-          warmup_steps=warmup_steps,
-          output_path=bi_encoder_path
-          )
+#bi_encoder.fit(train_objectives=[(train_dataloader, train_loss)],
+#            #evaluator=evaluator,
+#          epochs=num_epochs,
+#          evaluation_steps=1000,
+#          warmup_steps=warmup_steps,
+#          output_path=bi_encoder_path
+#          )
 
 #bi_encoder.save(bi_encoder_path)
 
 
+
 embeddings_a = bi_encoder.encode([a for a,b,_ in test])
 embeddings_b = bi_encoder.encode([b for a,b,_ in test])
-
 
 def bi_encoder_cos(n):
     e1 = embeddings_a[n]
