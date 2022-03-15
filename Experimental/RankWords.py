@@ -29,23 +29,27 @@ def format_attention(attention, layers=None, heads=None):
 
 def fuseTokens(tokens):
     newList=["<s>"]
+    if tokens[1][0]!='Ġ':
+        tokens[1]='Ġ'+tokens[1]
     IndexList=[0]
-    wordCount=1
+    wordCount=0
     for i in range(1,len(tokens)):
         if tokens[i] in ["</s>"] or tokens[i][0]=="Ġ":
             wordCount+=1
         IndexList.append(wordCount)
     numOfWords=IndexList[-2:][0]
     for i in range(1,numOfWords+1):
-        first_pos = IndexList.index(i)
-        last_pos = len(IndexList) - IndexList[::-1].index(i) - 1
+        try:
+            first_pos = IndexList.index(i)
+            last_pos = len(IndexList) - IndexList[::-1].index(i) - 1
+        except ValueError:
+            1+1
         #print(tokens[first_pos], tokens[last_pos])
         if first_pos!=last_pos:
             newList.append(''.join(tokens[first_pos:last_pos+1]))
         else:
             newList.append(tokens[first_pos])
     newList.append("</s>")
-
     return newList,IndexList
 
 def fuseAttention(tokens,att):
@@ -57,7 +61,10 @@ def fuseAttention(tokens,att):
         attention[indexList[i]]+=att[i]
     #normalize:
     for i in range(len(attention)):
-        attention[i]=attention[i]/indexList.count(i)
+        try:
+            attention[i]=attention[i]/indexList.count(i)
+        except ZeroDivisionError:
+            1+1
     newerTokens=[]
     for t in newTokens:
         if t[0]=="Ġ":

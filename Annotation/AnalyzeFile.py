@@ -10,11 +10,16 @@ from Experimental.RankWords import getRankingFromRoberta
 def loadFile(filePath):
     datasets = []
     count = 0
-    with open("D:\PhD\Annotator\Annotator-josif-test\Annotator\Label_File_#1.json") as json_file:
+    #"D:\PhD\Annotator\Annotator-josif-test\Annotator\Label_File_#1.json"
+    with open("D:\PhD\Annotator\Annotator-christian-test\Label_File_#1.json") as json_file:
         data = json.load(json_file)
         datasets.append(DataSet(data,count))
         count+=1
     return datasets
+
+
+
+
 
 def getData_from_DataSet(ds):
     selected=[]
@@ -31,7 +36,7 @@ def compareResults(selected,rankings):
         res=rankings[f][:3]
         sel=selected[f]
         print("Top3:  ",res)
-        print("Josif: ",sel)
+        print("Christian: ",sel)
         print("####################################################################################################")
 
 

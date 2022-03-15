@@ -1,3 +1,5 @@
+from collections import Counter
+
 import pymongo
 from random import randint
 import nltk
@@ -6,6 +8,9 @@ from nltk.tokenize import word_tokenize
 from string import punctuation
 import json
 import random
+
+
+
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["WikiHarvest"]
@@ -75,46 +80,59 @@ def loadDocumentsFromMongo(number,desired):
             break
     return arr,len(arr)
 
-sample_per_user=300
+sample_per_user=270
 number_of_users=10
 shared_items=30
-number_of_items_toQuery=(sample_per_user * number_of_users) + ((shared_items/2) * number_of_users)
+unique_shared_items_count=shared_items
+number_of_items_toQuery=(sample_per_user * number_of_users) + unique_shared_items_count
+
 stoplist = set(stopwords.words('english') + list(punctuation)+ ["``","''","'s"])
 listOfDocs=[]
 sharelist=[]
 
 count=0
 allDocuments,_=loadDocumentsFromMongo(8000,number_of_items_toQuery)
+#randomDocuments,_=loadDocumentsFromMongo(shared_items*unique_shared_items_count,unique_shared_items_count)
+
+#for doc in randomDocuments:
+#    sharelist.append(doc)
+count=0
 for doc in allDocuments:
-    if count<(shared_items/2)*number_of_users:
+    if len(sharelist)<shared_items:
         sharelist.append(doc)
     else:
         listOfDocs.append(doc)
-    count += 1
-temp=[]
-IDS=[it['ID'] for it in sharelist]
-print(IDS)
-for item in sharelist:
-    temp.append(item)
-    temp.append(item)
-sharelist=temp
+    count+=1
+
 random.shuffle(sharelist)
 
-
-
+added=[]
+toWrite=[]
+IDS=[]
 for k in range(number_of_users):
     writeArr=[]
-    with open("Files/File_"+str(k)+".json", mode="w",encoding="utf-8") as file:
-        for i in range(sample_per_user):
-            writeArr.append(listOfDocs.pop(0))
-        for i in range(shared_items):
-            if sharelist[0] not in writeArr:
-                writeArr.append(sharelist.pop(0))
-            else:
-                writeArr.append(sharelist.pop(1))
+    for i in range(sample_per_user):
+        writeArr.append(listOfDocs.pop(0))
+    toWrite.append(writeArr)
 
-        json.dump(writeArr, file,indent=4)
+IDS=[w["ID"] for w in sharelist]
 
+for j in range(number_of_users):
+    toWrite[j].extend(sharelist)
+
+
+for k in range(len(toWrite)):
+    with open("Files/DataSet"+str(k)+".json", mode="w",encoding="utf-8") as file:
+        random.shuffle(toWrite[k])
+        if len(toWrite[k])!=sample_per_user+shared_items:
+            print("Error in Arr size")
+        else:
+            json.dump(toWrite[k], file,indent=4)
+
+with open("unique_IDS.txt","w") as f:
+    for d in IDS:
+        f.write(d+"\n")
+print(IDS)
 
 print("!")
 

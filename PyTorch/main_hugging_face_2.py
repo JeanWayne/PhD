@@ -104,7 +104,7 @@ dataset=train_val_dataset(dataset, val_split=0.15)
 train_dataloader = DataLoader(dataset["train"], shuffle=True,batch_size=TRAIN_BATCH_SIZE)
 eval_dataloader = DataLoader(dataset["val"],batch_size=TRAIN_BATCH_SIZE)
 
-train_size = 0.8
+train_size = 0.85
 #traindata=DataLoader(dataset)
 
 class RobertaClass(torch.nn.Module):
@@ -134,8 +134,6 @@ class RobertaClass(torch.nn.Module):
         cat=self.transform(cat)
 
 
-
-
         #cat=self.relu(cat)
         ##CrossEncoderApproach
         #cat=torch.cat((pooler_1,pooler_2),1)
@@ -159,7 +157,7 @@ model.to(device)
 #loss_function = torch.nn.L1Loss()
 loss_function = torch.nn.MSELoss()
 optimizer = torch.optim.AdamW(params =  model.parameters(), lr=LEARNING_RATE)
-scheduler = StepLR(optimizer, step_size=5000, gamma=0.5)
+scheduler = StepLR(optimizer, step_size=7000, gamma=0.5)
 print(model)
 print(model.parameters())
 def calcuate_accuracy(preds, targets):
@@ -248,7 +246,7 @@ def train(epoch):
     fpr, tpr, thresholds = metrics.roc_curve(truevals, predictions, pos_label=True)
     auc = metrics.auc(fpr, tpr)
     print("AUC: ", auc)
-    save_path="./Model/Epoch_"+str(epoch)+"_"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+"_AUC_"+str(auc)
+    save_path="./Model/"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+"_Epoch_"+str(epoch)+"AUC_"+str(auc)
     model.l1.save_pretrained(save_path)
     tokenizer.save_pretrained(save_path)
     #print(f'The Total Accuracy for Epoch {epoch}: {(n_correct * 100) / nb_tr_examples}')
@@ -258,6 +256,6 @@ def train(epoch):
     #print(f"Training Accuracy Epoch: {epoch_accu}")
     return
 
-EPOCHS = 5
+EPOCHS = 9
 for epoch in range(EPOCHS):
     train(epoch)

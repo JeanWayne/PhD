@@ -21,7 +21,8 @@ def deThumbnailURL(url):
     return url
 
 class DataSet():
-    def __init__(self,json):
+    def __init__(self,json,fileName):
+        self.fileName=fileName
         self.Items=[]
         self.processJSON(json)
     def processJSON(self,json):
@@ -36,13 +37,18 @@ class DataSet():
                 item["unsure"]=k['unsure']
             except:
                 item["unsure"]=None
+            try:
+                item["bad"]=k['bad']
+            except:
+                item["bad"]=None
             self.Items.append(item)
 
             #self.Items.append(Item(k['id'],k['caption'],k['tokens'],k['url'],k['selected']))
 
     def saveJSON(self):
-        with open("Label_File_#1.json", mode="w",encoding="utf-8") as file:
+        with open(self.fileName, mode="w",encoding="utf-8") as file:
             json.dump(self.Items, file, indent=4)
+
 class Item():
     def __init__(self,id,caption,tokens,url,selected):
         self.ID=id
@@ -145,12 +151,23 @@ class AnnotatorApp(App):
         self.idx_txt_input.text=str(self.INDEX)
         self.updateProgressBar()
         self.searchBar.value=self.INDEX
-        if not self.ds.Items[self.INDEX]["unsure"]:
-            self.unsure_button.background_color=[0.2,0.4,0,1]
-            self.unsure_button.text="Confident"
+        #if not self.ds.Items[self.INDEX]["unsure"]:
+        #    self.unsure_button.background_color=[0.2,0.4,0,1]
+        #    self.unsure_button.text="Confident"
+        #else:
+        #    self.unsure_button.background_color=[1.,.05,0.05,1]
+        #    self.unsure_button.text="UNSURE!"
+
+        if not self.ds.Items[self.INDEX]["bad"]:
+            self.checkbox.active=False
         else:
-            self.unsure_button.background_color=[1.,.05,0.05,1]
-            self.unsure_button.text="UNSURE!"
+            self.checkbox.active=True
+
+        if not self.ds.Items[self.INDEX]["unsure"]:
+            self.checkbox_unsure.active=False
+        else:
+            self.checkbox_unsure.active=True
+
 
     def toogleStretch(self,instance):
         self.img.allow_stretch=not self.img.allow_stretch
@@ -161,19 +178,30 @@ class AnnotatorApp(App):
         self.updateButtons(instance)
         self.ds.saveJSON()
 
+    def bad_term(self,instance,value):
+        self.ds.Items[self.INDEX]["bad"]=value
+        self.updateButtons(instance)
+        self.ds.saveJSON()
+
+    def unsure_term(self,instance,value):
+        self.ds.Items[self.INDEX]["unsure"]=value
+        self.updateButtons(instance)
+        self.ds.saveJSON()
+
     def countCompletedItems(self):
         count=0
         for s in self.ds.Items:
             if len(s["selected"])>0 or s["unsure"]:
                 count+=1
         return count
+
     def countUncompletedItems(self):
         return self.MAX_INDEX+1-self.countCompletedItems()
 
     def gotoNext(self,instance):
         next_idx=-1
         for s in range(len(self.ds.Items)):
-            if (len(self.ds.Items[s]["selected"])<1):
+            if (len(self.ds.Items[s]["selected"])<1) and not self.ds.Items[s]["bad"]:
                 next_idx=s
                 break
         if next_idx<self.MAX_INDEX and next_idx >=0:
@@ -192,13 +220,15 @@ class AnnotatorApp(App):
     def build(self):
         self.INDEX=0
         if len(sys.argv)<2:
-            with open('Files/File_0.json') as json_file:
+            filepath='Files/DataSet0.json'
+            with open(filepath) as json_file:
                 self.data = json.load(json_file)
         else:
-            with open(sys.argv[1]) as json_file:
+            filepath=sys.argv[1]
+            with open(filepath) as json_file:
                 self.data = json.load(json_file)
 
-        self.ds = DataSet(self.data)
+        self.ds = DataSet(self.data,filepath)
         self.MAX_INDEX=len(self.ds.Items)-1
         self.buttonList=[]
         caption=self.ds.Items[self.INDEX]["caption"]
@@ -208,12 +238,18 @@ class AnnotatorApp(App):
 
         #Create GUI
         self.caption_label = Label(text =caption,size_hint=(1,.10),font_size="14sp")
+        self.checkbox_label = Label(text ="None of the proposed terms \nis suited for this image: ",size_hint=(1,.10),font_size="14sp",halign="right", valign="middle")
+        self.checkbox_unsure_label = Label(text =" Unsure: ",size_hint=(1,.10),font_size="14sp",halign="right", valign="middle")
+        self.empty_checkbox_label = Label(text ="             ",size_hint=(1,.10),font_size="14sp",halign="right", valign="middle")
+        self.empty_checkbox_label2 = Label(text ="             ",size_hint=(1,.10),font_size="14sp",halign="right", valign="middle")
+        self.empty_checkbox_label3 = Label(text ="            ",size_hint=(1,.10),font_size="14sp",halign="right", valign="middle")
+
         self.idx_count_label = Label(text ="of "+str(self.MAX_INDEX),size_hint=(1,.10),font_size="14sp")
 
         self.pb = ProgressBar(max= self.MAX_INDEX,size_hint=(1,.01))
         self.searchBar = ProgressBar(max= self.MAX_INDEX,size_hint=(1,.01))
 
-        idxLayout=GridLayout(cols=5, size_hint=(1, .05))
+        idxLayout=GridLayout(cols=9, size_hint=(1, .05))
         gridlayout = GridLayout(cols=3, size_hint=(1, .90))
         mainLayout = BoxLayout(orientation = 'vertical')
         self.captionLayout = GridLayout(cols=8,size_hint=(1,.20))#BoxLayout(orientation = 'horizontal',size_hint=(1,.20))
@@ -247,12 +283,12 @@ class AnnotatorApp(App):
            size_hint=(1, 1),
             on_press=self.gotoNext)
 
-        self.button_next=Button(text="N\nE\nX\nT",
+        self.button_next=Button(text="N\nE\nX\nT\n\nU\nN\nS\nE\nE\nN",
            font_size="20sp",
            color=(1, 1, 1, 1),
            size=(32, 32),
            size_hint=(.1, 1.),
-            on_press=self.next)
+            on_press=self.gotoNext)
         self.button_back=Button(text="B\nA\nC\nK",
            font_size="20sp",
            color=(1, 1, 1, 1),
@@ -266,12 +302,24 @@ class AnnotatorApp(App):
            size_hint=(1, 1.),
             on_press=self.unsure)
         self.unsure_button.wasPressed=self.ds.Items[self.INDEX]["unsure"]
+        self.checkbox = CheckBox(color=(1,1,1,1))
+        self.checkbox_unsure = CheckBox(color=(1,1,1,1))
+        self.checkbox.bind(active=self.bad_term)
+        self.checkbox_unsure.bind(active=self.unsure_term)
+
         #FILL Layout
         idxLayout.add_widget(self.goto_button)
         idxLayout.add_widget(self.idx_txt_input)
         idxLayout.add_widget(self.idx_count_label)
-        idxLayout.add_widget(self.nextNew_button)
-        idxLayout.add_widget(self.unsure_button)
+        #idxLayout.add_widget(self.nextNew_button)
+        #idxLayout.add_widget(self.unsure_button)
+        idxLayout.add_widget(self.empty_checkbox_label)
+        idxLayout.add_widget(self.checkbox_unsure_label)
+        idxLayout.add_widget(self.checkbox_unsure)
+        idxLayout.add_widget(self.empty_checkbox_label2)
+        idxLayout.add_widget(self.checkbox_label)
+        idxLayout.add_widget(self.checkbox)
+        idxLayout.add_widget(self.empty_checkbox_label3)
         #idxLayout.add_widget(self.checkbox)
 
         gridlayout.add_widget(self.button_back)
@@ -289,7 +337,7 @@ class AnnotatorApp(App):
         mainLayout.add_widget(self.captionLayout)
 
         self.updateButtons(self)
-
+        self.gotoNext(self)
         Window.bind(on_request_close=self.on_request_close)
 
         return mainLayout

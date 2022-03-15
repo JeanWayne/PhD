@@ -1,5 +1,5 @@
 class DataSet():
-    def __init__(self,json,id):
+    def __init__(self,json=[],id=-1):
         self.Items=[]
         self.id=id
         self.processJSON(json)
@@ -15,6 +15,11 @@ class DataSet():
                 item["unsure"]=k['unsure']
             except:
                 item["unsure"]=None
+            try:
+                item['bad']=k['bad']
+            except:
+                item['bad']=None
+
             self.Items.append(item)
 
             #self.Items.append(Item(k['id'],k['caption'],k['tokens'],k['url'],k['selected']))
